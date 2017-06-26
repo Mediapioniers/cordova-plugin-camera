@@ -63,11 +63,13 @@ function capture(success, errorCallback, opts) {
     parent.style.zIndex = HIGHEST_POSSIBLE_Z_INDEX;
     parent.className = 'cordova-camera-capture';
 
-    if (Object.prototype.hasOwnProperty.call(opts, 'className')) {
+    var guiOpts = opts[10] || {};
+
+    if (Object.prototype.hasOwnProperty.call(guiOpts, 'className')) {
         if (parent.className && parent.className.length) {
-            parent.className += ' ' + opts.className;
+            parent.className += ' ' + guiOpts.className;
         } else {
-            parent.className = opts.className;
+            parent.className = guiOpts.className;
         }
     }
     video.width = targetWidth;
@@ -89,7 +91,7 @@ function capture(success, errorCallback, opts) {
     };
 
     var getButtonText = function(index, defaultValue) {
-        return opts && opts.buttons && opts.buttons[index] && opts.buttons[index].text ? opts.buttons[index].text : defaultValue;
+        return guiOpts && guiOpts.buttons && guiOpts.buttons[index] && guiOpts.buttons[index].text ? guiOpts.buttons[index].text : defaultValue;
     };
 
     controls.appendChild(button1);
@@ -112,7 +114,20 @@ function capture(success, errorCallback, opts) {
         var canvas = document.createElement('canvas');
         canvas.width = targetWidth;
         canvas.height = targetHeight;
-        canvas.getContext('2d').drawImage(video, 0, 0, targetWidth, targetHeight);
+
+        var newWidth, newHeight,
+            aspect = video.videoHeight / video.videoWidth;
+        if (aspect < 1) {
+            newWidth = targetWidth;
+            newHeight = targetWidth * aspect;
+        } else {
+            newHeight = targetHeight;
+            newWidth = targetHeight * aspect;
+
+        }
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0, video.videoWidth, video.videoHeight, 0, 0, newWidth, newHeight);
 
         // convert image stored in canvas to base64 encoded image
         var imageData = canvas.toDataURL('image/png');
