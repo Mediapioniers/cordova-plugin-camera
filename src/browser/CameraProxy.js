@@ -54,23 +54,60 @@ function capture(success, errorCallback, opts) {
     var targetWidth = opts[3];
     var targetHeight = opts[4];
 
-    targetWidth = targetWidth == -1?320:targetWidth;
-    targetHeight = targetHeight == -1?240:targetHeight;
+    targetWidth = targetWidth === -1 ? 320 : targetWidth;
+    targetHeight = targetHeight === -1 ? 240 : targetHeight;
 
     var video = document.createElement('video');
-    var button = document.createElement('button');
     var parent = document.createElement('div');
     parent.style.position = 'relative';
     parent.style.zIndex = HIGHEST_POSSIBLE_Z_INDEX;
     parent.className = 'cordova-camera-capture';
-    parent.appendChild(video);
-    parent.appendChild(button);
 
+    if (Object.prototype.hasOwnProperty.call(opts, 'className')) {
+        if (parent.className && parent.className.length) {
+            parent.className += ' ' + opts.className;
+        } else {
+            parent.className = opts.className;
+        }
+    }
     video.width = targetWidth;
     video.height = targetHeight;
-    button.innerHTML = 'Capture!';
 
-    button.onclick = function() {
+    var controls = document.createElement('div');
+    var button1 = document.createElement('button');
+    var button2 = document.createElement('button');
+
+    var stopStream = function(stream) {
+        // Note that MediaStream.stop() is deprecated as of Chrome 47.
+        if (stream.stop) {
+            stream.stop();
+        } else {
+            stream.getTracks().forEach(function(track) {
+                track.stop();
+            });
+        }
+    };
+
+    var getButtonText = function(index, defaultValue) {
+        return opts && opts.buttons && opts.buttons[index] && opts.buttons[index].text ? opts.buttons[index].text : defaultValue;
+    };
+
+    controls.appendChild(button1);
+    controls.appendChild(button2);
+
+    button1.innerHTML = getButtonText(0, 'Capture!');
+    button2.innerHTML = getButtonText(1, 'Cancel');
+
+    parent.appendChild(video);
+    parent.appendChild(controls);
+
+    button2.onclick = function() {
+        stopStream(localMediaStream);
+        parent.parentNode.removeChild(parent);
+        return errorCallback('');
+    };
+
+    button1.onclick = function() {
         // create a canvas and capture a frame from video stream
         var canvas = document.createElement('canvas');
         canvas.width = targetWidth;
@@ -82,23 +119,16 @@ function capture(success, errorCallback, opts) {
         imageData = imageData.replace('data:image/png;base64,', '');
 
         // stop video stream, remove video and button.
-        // Note that MediaStream.stop() is deprecated as of Chrome 47.
-        if (localMediaStream.stop) {
-            localMediaStream.stop();
-        } else {
-            localMediaStream.getTracks().forEach(function (track) {
-                track.stop();
-            });
-        }
+        stopStream(localMediaStream);
         parent.parentNode.removeChild(parent);
 
         return success(imageData);
     };
 
     navigator.getUserMedia = navigator.getUserMedia ||
-                             navigator.webkitGetUserMedia ||
-                             navigator.mozGetUserMedia ||
-                             navigator.msGetUserMedia;
+        navigator.webkitGetUserMedia ||
+        navigator.mozGetUserMedia ||
+        navigator.msGetUserMedia;
 
     var successCallback = function(stream) {
         localMediaStream = stream;
@@ -117,7 +147,8 @@ function capture(success, errorCallback, opts) {
 
 module.exports = {
     takePicture: takePicture,
-    cleanup: function(){}
+    cleanup: function() {
+    }
 };
 
-require("cordova/exec/proxy").add("Camera",module.exports);
+require("cordova/exec/proxy").add("Camera", module.exports);
