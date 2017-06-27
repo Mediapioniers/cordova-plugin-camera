@@ -58,6 +58,7 @@ function capture(success, errorCallback, opts) {
     targetHeight = targetHeight === -1 ? 240 : targetHeight;
 
     var video = document.createElement('video');
+    video.muted = true;
     var parent = document.createElement('div');
     parent.style.position = 'relative';
     parent.style.zIndex = HIGHEST_POSSIBLE_Z_INDEX;
