@@ -33,7 +33,7 @@ function takePicture(success, error, opts) {
         input.name = 'files[]';
 
         input.onchange = function(inputEvent) {
-            var reader = new FileReader();
+            var reader = new FileReader(); /* eslint no-undef : 0 */
             reader.onload = function(readerEvent) {
                 input.parentNode.removeChild(input);
 
@@ -147,9 +147,12 @@ function capture(success, errorCallback, opts) {
 
     var successCallback = function(stream) {
         localMediaStream = stream;
-        video.src = window.URL.createObjectURL(localMediaStream);
+        if ('srcObject' in video) {
+            video.srcObject = localMediaStream;
+        } else {
+            video.src = window.URL.createObjectURL(localMediaStream);
+        }
         video.play();
-
         document.body.appendChild(parent);
     };
 
@@ -166,4 +169,4 @@ module.exports = {
     }
 };
 
-require("cordova/exec/proxy").add("Camera", module.exports);
+require('cordova/exec/proxy').add('Camera', module.exports);
